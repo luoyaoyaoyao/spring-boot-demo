@@ -77,17 +77,17 @@ public class App {
 
                 System.out.println("write " + (++count));
 //                IndexResponse indexResponse = client.index(indexRequest,RequestOptions.DEFAULT);
-                client.indexAsync(indexRequest, RequestOptions.DEFAULT, new ActionListener<IndexResponse>() {
-                    @Override
-                    public void onResponse(IndexResponse indexResponse) {
-
-                    }
-
-                    @Override
-                    public void onFailure(Exception e) {
-
-                    }
-                });
+//                client.indexAsync(indexRequest, RequestOptions.DEFAULT, new ActionListener<IndexResponse>() {
+//                    @Override
+//                    public void onResponse(IndexResponse indexResponse) {
+//
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Exception e) {
+//
+//                    }
+//                });
 
             }
 
