@@ -4,6 +4,8 @@ import org.apache.http.HttpHost;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -31,70 +33,53 @@ public class App {
         return con;
     }
 
-    public static RestHighLevelClient getRestHighLevelClient() {
-        RestHighLevelClient client = new RestHighLevelClient(
-                RestClient.builder(new HttpHost("127.0.0.1", 9200, "http")));
-        return client;
-    }
-
     public static void main(String[] args) throws SQLException, IOException {
         Connection connection = getConnection();
-        System.out.println(connection.getMetaData().toString());
+//        System.out.println(connection.getMetaData().toString());
+        try (RestHighLevelClient client = ESClient.getRestHighLevelClient()) {
+            PreparedStatement ps = null;
+            String sql = "SELECT * FROM sakila.address";
+            int count = 0;
+            ResultSet rs;
+            BulkRequest bulkRequest = new BulkRequest();
+            try {
+                ps = connection.prepareStatement(sql);
+                rs = ps.executeQuery();
+                while (rs.next()) {
+                    int adress_id = rs.getInt(1);
+                    String adress = rs.getString(2);
+                    String adress2 = rs.getString(3);
+                    String district = rs.getString(4);
+                    int cityId = rs.getInt(5);
+                    String postal_code = rs.getString(6);
+                    String phone = rs.getString(7);
+//                    Date lastUpdate = rs.getDate(9);
+                    Map<String, Object> message = new HashMap<>();
+                    message.put("adress_id", adress_id);
+                    message.put("adress", adress);
+                    message.put("adress2", adress2);
+                    message.put("district", district);
+                    message.put("cityId", cityId);
+                    message.put("postal_code", postal_code);
+                    message.put("phone", phone);
+//                    message.put("lastUpdate", lastUpdate);
 
-        RestHighLevelClient client = getRestHighLevelClient();
-//        CreateIndexRequest request = new CreateIndexRequest("sakila");
-//        CreateIndexResponse createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
+                    IndexRequest indexRequest = new IndexRequest("sakila");
+                    indexRequest.source(message);
+                    bulkRequest.add(indexRequest);
+
+                    System.out.println("write " + (++count));
 
 
-        PreparedStatement ps;
-        String sql = "SELECT * FROM sakila.address";
-        int count = 0;
-        ResultSet rs;
-        try {
-            ps = connection.prepareStatement(sql);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                int adress_id = rs.getInt(1);
-                String adress = rs.getString(2);
-                String adress2 = rs.getString(3);
-                String district = rs.getString(4);
-                int cityId = rs.getInt(5);
-                String postal_code = rs.getString(6);
-                String phone = rs.getString(7);
-                Date lastUpdate = rs.getDate(9);
-                Map<String, Object> message = new HashMap<>();
-                message.put("adress_id",adress_id);
-                message.put("adress",adress);
-                message.put("adress2",adress2);
-                message.put("district",district);
-                message.put("cityId",cityId);
-                message.put("postal_code",postal_code);
-                message.put("phone",phone);
-                message.put("lastUpdate",lastUpdate);
+                }
 
-                IndexRequest indexRequest = new IndexRequest();
-                indexRequest.source(message);
+                BulkResponse bulkItemResponses = client.bulk(bulkRequest, RequestOptions.DEFAULT);
 
-                System.out.println("write " + (++count));
-//                IndexResponse indexResponse = client.index(indexRequest,RequestOptions.DEFAULT);
-//                client.indexAsync(indexRequest, RequestOptions.DEFAULT, new ActionListener<IndexResponse>() {
-//                    @Override
-//                    public void onResponse(IndexResponse indexResponse) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onFailure(Exception e) {
-//
-//                    }
-//                });
 
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
             }
 
-        } catch (Exception e) {
-
         }
-
-
     }
 }
